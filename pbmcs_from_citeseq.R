@@ -200,11 +200,12 @@ for (i in seq_along(cluster_s_list)){
   # Plots
   # 1. across numPCs for the same num_minority cells
   violin_plot_data$numPCs = as.factor(violin_plot_data$numPCs)
-  p <- ggplot(violin_plot_data, aes(x=numPCs, y=prop_minority_neighbors)) + geom_boxplot(width=0.1)#+ geom_violin()
+  p <- ggplot(violin_plot_data, aes(x=numPCs, y=prop_minority_neighbors)) + geom_boxplot(width=0.1, outlier.size = 0.1)#+ geom_violin()
   p = p + stat_summary(fun.y=median, geom="point", size=2, color='red')
   p = p #+ theme_classic() #+ geom_jitter(size=1, position=position_jitter(0.1), alpha=0.1)  
   p = p + ggtitle(paste0(num_minority_cells, " ", minority_celltype, " cells"))
   p = p + xlab('Num PCs') + ylab(paste0("Fraction of ", minority_celltype, " neighbors"))
+  p = p + theme(axis.text.x = element_text(angle = 90, hjust=0.95, size=7))
   p
   ggsave(paste0(cluster_dir_path, "prop_neighbors_acrosspcs.png"))
   # 2. across num_minority cells, fixed numPCs
@@ -227,16 +228,96 @@ for (i in seq_along(cluster_s_list)){
 }
 
 violin_plot_data_pcs$num_minority_cells = as.factor(violin_plot_data_pcs$num_minority_cells)
-p <- ggplot(violin_plot_data_pcs, aes(x=num_minority_cells, y=prop_minority_neighbors)) + geom_boxplot(width=0.1)#+ geom_violin()
+tmpLabels = seq(5, 90, by=5)
+names(tmpLabels) = levels(violin_plot_data_pcs$num_minority_cells)
+violin_plot_data_pcs$pct_minority_cells = as.factor(tmpLabels[as.character(violin_plot_data_pcs$num_minority_cells)])
+p <- ggplot(violin_plot_data_pcs, 
+            aes(x=pct_minority_cells, 
+                y=prop_minority_neighbors)) + geom_boxplot(width=0.1, outlier.size = 0.1)#+ geom_violin()
 p = p + stat_summary(fun.y=median, geom="point", size=2, color='red')
 p = p #+ theme_classic() #+ geom_jitter(size=1, position=position_jitter(0.1), alpha=0.1)  
-p = p + ggtitle(paste0(npcs, " PCs, varying #", minority_celltype, " cells"))
-p = p + xlab('Num cells') + ylab(paste0("Fraction of ", minority_celltype, " neighbors"))
+p = p + ggtitle(paste0(fixed_npcs, " PCs, varying #", minority_celltype, " cells"))
+p = p + xlab('Percent Memory B cells in case') + ylab(paste0("Fraction of ", minority_celltype, " neighbors"))
+p = p + theme(axis.text.x = element_text(angle = 90, hjust=0.95, size=7))
 p
 ggsave(paste0("prop_neighbors_acrossnumminority.png"))
 
 saveRDS(variable_genes_list, "variable_genes_list.RDS")
 
+#####################
+#==== CLustering ====
+#####################
+
+for (i in seq_along(cluster_s_list)){
+  cluster_s = cluster_s_list[[i]]
+  cluster_ident = names(cluster_s_list)[i]
+  print(cluster_ident)
+  #dir.create(paste0("data/", cluster_ident, "/"))
+  cluster_dir_path = paste0("data/", cluster_ident, "/")
+  cluster_s <- NormalizeData(cluster_s)
+  all.genes <- rownames(cluster_s)
+  cluster_s <- ScaleData(cluster_s, features = all.genes)
+  cluster_s <- FindVariableFeatures(cluster_s)
+  mouse_vargenes_bool <- startsWith(VariableFeatures(cluster_s), "MOUSE-")
+  VariableFeatures(cluster_s) = VariableFeatures(cluster_s)[!mouse_vargenes_bool]
+  #VariableFeatures(cluster_s) = VariableFeatures(pbmc)
+  cluster_s <- RunPCA(cluster_s, npcs=npcs)
+  ElbowPlot(cluster_s)
+  cluster_s <- FindNeighbors(cluster_s)
+  cluster_s <- FindClusters(cluster_s, resolution = 0.05) # adjust resultion to get two clusters
+  #cluster_s <- FindClusters(cluster_s)
+  #head(Idents(cluster_s), 5)
+  #levels(Idents(cluster_s))
+  #cluster_s <- RunTSNE(cluster_s, dims = 1:fixed_npcs)
+  #DimPlot(cluster_s, reduction = "tsne", group.by = 'seurat_clusters')# + ggtitle(cluster_ident)
+  print(table(cluster_s@meta.data[c("batch", "seurat_clusters")])) # original labels
+  table(cluster_s@meta.data[c("celltype.l2", "seurat_clusters", "seurat_clusters")]) # true labels
+  
+  cluster_s <- RunTSNE(cluster_s, dims = 1:fixed_npcs)
+  DimPlot(cluster_s, reduction = "tsne", group.by = 'seurat_clusters') + ggtitle("Seurat clusters")
+  ggsave(paste0(cluster_dir_path, "tsne5_seurat_", 
+                length(unique(cluster_s@meta.data$seurat_clusters)), 
+                "clusters.png"))
+  
+  plot_seurat_clusetrs <- function(cluster_s, cluster_dir_path){
+
+    
+    prop_test <- prop.test(
+      x = table(cluster_s@meta.data[c("batch", "seurat_clusters")])[2, ], # case counts
+      n = colSums(table(cluster_s@meta.data[c("batch", "seurat_clusters")])), # total_counts
+      p = rep(0.5, length(unique(cluster_s@meta.data$seurat_clusters)))
+    )
+    
+    p_df = cluster_s@meta.data[, c("batch", "celltype.l2", "seurat_clusters")]
+    # Stacked barplot with multiple groups
+    p <- ggplot(data=p_df, aes(x=seurat_clusters, y=seurat_clusters, fill=batch)) +
+      geom_bar(stat="identity")
+    p <- p + scale_fill_manual(values=col_batch)
+    p <- p + ggtitle(paste0("Chi-squared prop test p-val=", round(prop_test$p.value, 4)))
+    p <- p + labs(x="Seurat clusters", y = "Num cells") + theme_classic()
+    p
+    ggsave(paste0(cluster_dir_path, "seurat_", 
+                  length(unique(cluster_s@meta.data$seurat_clusters)), 
+                  "clusters_props_origlabels.png"))
+    
+    # Stacked barplot with multiple groups
+    p <- ggplot(data=p_df, aes(x=seurat_clusters, y=seurat_clusters, fill=celltype.l2)) +
+      geom_bar(stat="identity")#, position=position_dodge())
+    p <- p + scale_fill_manual(values=c("red", "gray"))
+    p <- p + ggtitle("Ground truth labels")
+    p <- p + labs(x="Seurat clusters", y = "Num cells") + theme_classic()
+    p
+    ggsave(paste0(cluster_dir_path, "seurat_", 
+                  length(unique(cluster_s@meta.data$seurat_clusters)), 
+                  "clusters_props_truthlabels.png"))
+  }
+  
+  plot_seurat_clusetrs(cluster_s, cluster_dir_path)
+  
+  #cluster_s <- FindClusters(cluster_s)
+  #plot_seurat_clusetrs(cluster_s, cluster_dir_path)
+}
+  
 #########################
 #==== Variable Genes ====
 #########################
