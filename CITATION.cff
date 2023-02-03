@@ -1,9 +1,0 @@
-cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
-authors:
-- family-names: "Goeva"
-  given-names: "Aleksandrina"
-- family-names: "al."
-  given-names: "et"
-title: "HiDDEN: A machine learning label refinement method for detection of disease-relevant populations in case-control single-cell transcriptomics"
-url: "https://github.com/tudaga/LabelCorrection"
