@@ -4,6 +4,8 @@ This repo contains all the code neccesary to reproduce all analyses and figures 
 This is a bleeding edge version 🔪. A guided tutorial is WIP. The creator and maintainer of this method and codebase is on maternity leave. Please allow ample time to respond to questions and requests.
 
 ## What is HiDDEN?
+![Figure 1](media/Figure1.jpeg)
+
 In many case-control experiments, only a subset of the cells in case samples are affected by the perturbation (Figure 1A). The standard analysis workflow of jointly clustering gene expression profiles of case and control cells can fail to distinguish affected from unaffected cells, resulting in mixed clusters (Figure 1B) due to multiple sources of variance competing with the perturbation signal. Differential expression using the sample-level labels within a mixed cluster can fail to recover the perturbation markers due to the incorrect labels decreasing detection power (Figure 1C). 
 
 Here we introduce HiDDEN, a novel machine learning method which refines the labels of individual cells within perturbation conditions to accurately reflect their status as affected or unaffected. The standard analysis of single cell data is not tailored to identifying perturbation-associated signals. However, combining gene expression profiles and sample-level labels in a novel way allows us to leverage that at least some of the labels are correct and empowers HiDDEN to utilize the shared variability in features corresponding to correctly labeled cells.
