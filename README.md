@@ -1,12 +1,31 @@
-# LabelCorrection
+# HiDDEN: A machine learning label refinement method for detection of disease-relevant populations in case-control single-cell transcriptomics
 
-This is bleeding edge version of hidden
+This repo contains all the code neccesary to reproduce the figures in our [preprint](https://www.biorxiv.org/content/10.1101/2023.01.06.523013v1). This is a bleeding edge version 🔪. A guided tutorial is WIP. The creator and maintainer of this method and codebase is on maternity leave. Please allow ample time to respond to questions and requests.
 
-hidden is
+## What is HiDDEN?
+In many case-control experiments, only a subset of the cells in case samples are affected by the perturbation (Figure 1A). The standard analysis workflow of jointly clustering gene expression profiles of case and control cells can fail to distinguish affected from unaffected cells, resulting in mixed clusters (Figure 1B) due to multiple sources of variance competing with the perturbation signal. Differential expression using the sample-level labels within a mixed cluster can fail to recover the perturbation markers due to the incorrect labels decreasing detection power (Figure 1C). 
 
-Include image for fig 1
+Here we introduce HiDDEN, a novel machine learning method which refines the labels of individual cells within perturbation conditions to accurately reflect their status as affected or unaffected. The standard analysis of single cell data is not tailored to identifying perturbation-associated signals. However, combining gene expression profiles and sample-level labels in a novel way allows us to leverage that at least some of the labels are correct and empowers HiDDEN to utilize the shared variability in features corresponding to correctly labeled cells.
 
-Tutorial is WIP. The creator and maintainer of this method is on maternity leave. Please allow ample time to respond to questions and requests.
+HiDDEN transforms the sample-level labels into cell-specific continuous perturbation-effect scores and assigns new binary cell labels, revealing their status as affected or unaffected (Figure 1D). The resulting binary labels can accurately capture the perturbation signature and boost power to detect genes whose expression is affected by the perturbation (Figure 1E).
 
-Citation to the pre-print
+## Giving Credit
+If you use this code in your work, we ask that you cite our work. Here is an example BibTex entry:
+
+```
+@article{Goeva2023,
+  doi = {10.1101/2023.01.06.523013},
+  url = {https://doi.org/10.1101/2023.01.06.523013},
+  year = {2023},
+  month = jan,
+  publisher = {Cold Spring Harbor Laboratory},
+  author = {Aleksandrina Goeva and Michael-John Dolan and Judy Luu and Eric Garcia and Rebecca Boiarsky and Rajat M Gupta and Evan Macosko},
+  title = {{HiDDEN}: A machine learning label refinement method for detection of disease-relevant populations in case-control single-cell transcriptomics}
+}
+```
+
+
+
+
+
 
