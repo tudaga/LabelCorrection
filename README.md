@@ -1,6 +1,7 @@
 # HiDDEN: A machine learning label refinement method for detection of disease-relevant populations in case-control single-cell transcriptomics
 
-This repo contains all the code neccesary to reproduce the figures in our [preprint](https://www.biorxiv.org/content/10.1101/2023.01.06.523013v1). This is a bleeding edge version 🔪. A guided tutorial is WIP. The creator and maintainer of this method and codebase is on maternity leave. Please allow ample time to respond to questions and requests.
+This repo contains all the code neccesary to reproduce all analyses and figures in our [preprint](https://www.biorxiv.org/content/10.1101/2023.01.06.523013v1). 
+This is a bleeding edge version 🔪. A guided tutorial is WIP. The creator and maintainer of this method and codebase is on maternity leave. Please allow ample time to respond to questions and requests.
 
 ## What is HiDDEN?
 In many case-control experiments, only a subset of the cells in case samples are affected by the perturbation (Figure 1A). The standard analysis workflow of jointly clustering gene expression profiles of case and control cells can fail to distinguish affected from unaffected cells, resulting in mixed clusters (Figure 1B) due to multiple sources of variance competing with the perturbation signal. Differential expression using the sample-level labels within a mixed cluster can fail to recover the perturbation markers due to the incorrect labels decreasing detection power (Figure 1C). 
