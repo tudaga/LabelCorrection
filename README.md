@@ -12,6 +12,15 @@ Here we introduce HiDDEN, a novel machine learning method which refines the labe
 
 HiDDEN transforms the sample-level labels into cell-specific continuous perturbation-effect scores and assigns new binary cell labels, revealing their status as affected or unaffected (Figure d). The resulting binary labels can accurately capture the perturbation signature and boost power to detect genes whose expression is affected by the perturbation (Figure e).
 
+## What's in the Repo?
+
+- **data** : Input files (*.csv, *.h5da, *.npz), larger files are compressed
+  - uncompress_data.sh : bash script to decompress files,
+  - compress_data.sh : bash script to compress files.
+- **figures** : Input and output files.
+- **notebooks** : Scripts and notebooks to reporduce figure analysis.
+- **media** : Images for github README.
+
 ## Giving Credit
 If you use this code in your work, we ask that you cite our work. Here is an example BibTex entry:
 
