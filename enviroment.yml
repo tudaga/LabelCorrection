@@ -1,0 +1,30 @@
+name: hiddensc
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - mamba
+  - yapf
+  - isort
+  - jupyter
+  - jupyterlab
+  - ipykernel
+  - nb_conda_kernels
+  - numpy
+  - matplotlib
+  - seaborn
+  - pandas
+  - scipy
+  - scikit-learn
+  - tqdm
+  - umap-learn
+  - pytorch
+  - torchvision
+  - scanpy
+  - python-igraph
+  - leidenalg
+  - scvi-tools
+  - pip:
+    - hdf5plugin
+  
