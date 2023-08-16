@@ -1,9 +1,9 @@
-# HiDDEN: A machine learning label refinement method for detection of disease-relevant populations in case-control single-cell transcriptomics
+## HiDDEN: A machine learning label refinement method for detection of disease-relevant populations in case-control single-cell transcriptomics
 
 This repo contains:
-* a python library *hiddensc*
-* a guided tutorial to get you started on identifying subtle state changes across conditions in your single-cell data
-* all the code neccesary to reproduce all analyses and figures in our [preprint](https://www.biorxiv.org/content/10.1101/2023.01.06.523013v1). 
+* 🐍📦 a python **library** *hiddensc* 
+* 📍📚 a guided **tutorial** to get you started on identifying subtle changes across conditions in your single-cell data
+* 💻📊 all the code neccesary to **reproduce** all analyses and figures in our [preprint](https://www.biorxiv.org/content/10.1101/2023.01.06.523013v1). 
 
 ## What is HiDDEN?
 ![Figure 1](media/Figure1.jpeg)
