@@ -2,7 +2,7 @@
 
 This repo contains:
 * 🐍📦 a python **library** *hiddensc* 
-* 📍📚 a guided **tutorial** to get you started on identifying subtle changes across conditions in your single-cell data
+* 📍📚 a guided [**tutorial**](https://github.com/tudaga/LabelCorrection/blob/main/notebooks/HiDDEN_Tutorial.ipynb) to get you started on identifying subtle changes across conditions in your single-cell data
 * 💻📊 all the code neccesary to **reproduce** all analyses and figures in our [preprint](https://www.biorxiv.org/content/10.1101/2023.01.06.523013v1) (doi:10.1101/2023.01.06.523013). 
 
 ## What is HiDDEN?
