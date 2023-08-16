@@ -3,6 +3,8 @@ from typing import Tuple
 import hdf5plugin
 import numpy as np
 import pandas as pd
+import os
+import glob
 
 from . import types
 
@@ -19,25 +21,21 @@ def check_ext(fname: str, ext: str) -> None:
     if not fname.endswith(ext):
         raise ValueError(f'Expected extension "{ext}" in {fname}')
 
-
 def update_npz(fname: str, new_data: types.ArrayDict) -> None:
     """Update values in a array dict."""
     data = load_npz(fname)
     data.update(new_data)
     save_npz(fname, data)
 
-
 def load_npz(fname: str) -> types.ArrayDict:
     """Load an array dict."""
     check_ext(fname, 'npz')
     return dict(np.load(fname))
 
-
 def save_npz(fname: str, data: types.ArrayDict) -> None:
     """Save an array dict."""
     check_ext(fname, 'npz')
     np.savez_compressed(fname, **data)
-
 
 def save_compressed_h5ad(fname: str, adata: types.AnnData) -> None:
     """Conveniece function for compressed h5ad, make sure we import hdf5plugin."""
@@ -47,15 +45,24 @@ def save_compressed_h5ad(fname: str, adata: types.AnnData) -> None:
                 compression_opts=hdf5plugin.Zstd(clevel=9).filter_options
                 )
 
-
-def load_predictions(fname: str) -> Tuple[types.Array, types.Array, pd.DataFrame]:
+def _read_prediction_csv(fname:str) -> pd.DataFrame:
     """Predictions have a special header + index, so we have a helper function."""
     check_ext(fname, 'csv')
-    pred_df = pd.read_csv(fname, index_col=[0], header=[0, 1, 2])
-    assert pred_df.columns[0][0] == 'batch', 'Expected batch values in first column'
-    batch = pred_df[pred_df.columns[0]].values
-    assert pred_df.columns[1][0] == 'perturbed', 'Expected perturbed values in first column'
-    perturbed = pred_df[pred_df.columns[1]].values
-    # Trim true values.
-    pred_df = pred_df[pred_df.columns[2:]]
-    return batch, perturbed, pred_df
+    return pd.read_csv(fname, index_col=[0], header=[0, 1, 2])
+
+def load_predictions(dirname: str) -> Tuple[types.Array, types.Array, pd.DataFrame]:
+    """Load all predictions in a folder."""
+    pattern = os.path.join(dirname, '*predictions.csv')
+    dfs = [_read_prediction_csv(fname) for fname in glob.glob(pattern)]
+    pred_df = pd.concat(dfs, axis=1)
+    cols = pred_df.columns.tolist()
+    values = {}
+    for label in ['batch', 'perturbed']:
+        is_col = np.array([label in c[0] for c in cols])
+        assert np.sum(is_col) == 1, f'Expected at least one {label} column, found {np.sum(is_col)}'
+        index = np.argmax(is_col)
+        values[label] = pred_df[cols[index]].values
+        pred_df.drop(cols[index], axis=1, inplace=True)
+        
+    return values['batch'], values['perturbed'], pred_df
+

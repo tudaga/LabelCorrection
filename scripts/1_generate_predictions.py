@@ -47,7 +47,8 @@ if __name__ == "__main__":
         main_datafile = os.path.join(root_path, files.DATA_DIR, f'{data_name}_raw.h5ad')
         adata = sc.read(main_datafile)
         hiddensc.datasets.preprocess_data(adata)
-        
+        hiddensc.datasets.normalize_and_log(adata)
+    
         # Load dim, setup data.
         feats = files.load_npz(at_results_dir('dim_reduced.npz'))
         y = (adata.obs['batch'].values == 'Case').astype(np.int32)

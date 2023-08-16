@@ -46,7 +46,8 @@ if __name__ == "__main__":
         main_datafile = os.path.join(root_path, files.DATA_DIR, f'{data_name}_raw.h5ad')
         adata = sc.read(main_datafile)
         hiddensc.datasets.preprocess_data(adata)
-        
+        hiddensc.datasets.normalize_and_log(adata)
+
         # Load predictions.
         batch, perturbed, pred_df = files.load_predictions(at_results_dir())
         # Calculate classification performance.

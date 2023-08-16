@@ -17,21 +17,23 @@ def augment_for_analysis(adata: types.AnnData) -> None:
     sc.tl.umap(adata)
     sc.tl.leiden(adata, resolution=1.2)
 
-
 def preprocess_data(adata: types.AnnData) -> None:
     """Basic preprocessing for dataset."""
+    sc.pp.filter_cells(adata, min_genes=20, inplace=True)
     sc.pp.filter_genes(adata, min_cells=1, inplace=True)
+    adata.raw = adata
+
+def normalize_and_log(adata: types.AnnData) -> None:
     sc.pp.normalize_total(adata, target_sum=1e4)
     sc.pp.log1p(adata)
     adata.raw = adata
-
-
+    
 def setup_minimal_data(counts: np.ndarray,
                        gene_ids: pd.Series,
                        barcodes: pd.Series,
                        batch: pd.Series,
                        perturbed: pd.Series) -> types.AnnData:
-    """Creates a minimal raw dataset."""
+    """Creates a minimal raw dataset in anndata format."""
     adata = sc.AnnData(counts, dtype=np.int32)
     adata.var_names = anndata.utils.make_index_unique(pd.Index(gene_ids))
     adata.var['gene_ids'] = gene_ids
@@ -42,13 +44,11 @@ def setup_minimal_data(counts: np.ndarray,
     adata.raw = adata
     return adata
 
-
 def _get_relevant_genes(name: str, df: pd.DataFrame) -> types.StrArray:
     """Helper function to extract relevant genes."""
     mask = np.logical_and(df[f'{name}_p'] < 0.05, df[f'{name}_l'] > 0)
     genes = df[f'{name}_n'][mask].values.astype(str)
     return genes
-
 
 def get_de_genes(adata: types.AnnData, label: str, prefix: str = '') -> types.StrArrayDict:
     """Get relevant differentially expressed genes based on a label."""
@@ -64,11 +64,10 @@ def get_de_genes(adata: types.AnnData, label: str, prefix: str = '') -> types.St
     de_genes = {f'{prefix}{i}': _get_relevant_genes(i, result_df) for i in levels}
     return de_genes
 
-
 def make_adata_with_hybrid_perturbed_cells(adata: types.AnnData, W_m: float) -> Tuple[types.AnnData, types.AnnData]:
     """Create an ablated dataset by perturbing cells.
 
-    To create the Memory B / Naive B hybrids with weights W_m and W_n := (1-W_m)
+    To create the Memory B / Naive B hybrids with weights W_m and W_n:=(1-W_m)
     for each Memory B cell indexed by i, denote the total number of UMIs with N_counts_i
     draw N_m_i = ceil(W_m * N_counts_i) from Multinom(gene_props_i), where gene_props_i is the s
     caled count vector across all genes for cell i
@@ -112,10 +111,8 @@ def make_adata_with_hybrid_perturbed_cells(adata: types.AnnData, W_m: float) -> 
     sc.pp.log1p(adata_hybrid)
     adata_hybrid.raw = adata_hybrid
     # sc.pp.highly_variable_genes(adata, min_mean=0.03, max_mean=5, min_disp=0.9) #min_mean=0.01, max_mean=4, min_disp=0.2
-
     # if plot_diagnostics:
     #    sc.pl.highly_variable_genes(adata)
-
     # adata = adata[:, adata.var.highly_variable]
     sc.pp.scale(adata_hybrid, max_value=10)
     sc.tl.pca(adata_hybrid, svd_solver='arpack', n_comps=50)

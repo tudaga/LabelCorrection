@@ -14,7 +14,6 @@ def peek_df(df: pd.DataFrame, n_peek: int = 2) -> None:
     print(f'Columns: {list(df.columns)}')
     ipython_display.display(df.head(n_peek))
 
-
 def visual_settings() -> None:
     """"Change matplotlib settings."""
     sns.set_style("white")
@@ -40,7 +39,6 @@ def visual_settings() -> None:
     pd.set_option("display.precision", 3)
     pd.set_option('display.float_format', lambda x: '%.3f' % x)
 
-
 def save_figure(fname: str, exts: Optional[List[str]] = None) -> None:
     """Save figure in multiple formats."""
     if '.' in fname:
@@ -50,10 +48,9 @@ def save_figure(fname: str, exts: Optional[List[str]] = None) -> None:
         fname = f'{fname}.{ext}'
         plt.savefig(fname, dpi=300, transparent=True, bbox_inches='tight')
 
-
 def save_fig_results(fname: str) -> None:
     """An opinionated file structure for figures."""
     save_figure(fname, exts=['png'])
     dirname, basename = os.path.dirname(fname), os.path.basename(fname)
     for ext in ['pdf', 'svg']:
-        save_figure(os.path.join(dirname, ext, basename), exts=[ext])
+        save_figure(os.path.join(dirname, basename), exts=[ext])

@@ -18,6 +18,24 @@ def get_pca(adata: types.AnnData, n_comps: int = 50) -> np.ndarray:
     x_scaled = sc.pp.scale(adata.X, max_value=10)
     return sc.tl.pca(x_scaled, svd_solver='arpack', n_comps=n_comps)
 
+def map_to_binary(values, case_control_labels, case_cond=1):
+    
+    # simple thresholding works, since the values are either very close to -1 or very close to 1
+    # return np.interp(values, [np.min(values),np.max(values)], [0,1])>=0.5
+    
+    # but for consistency,
+    # using kmeans with n_clusters=2, same as with HiDDEN p_hat binarization of the cells in the case_cond
+    
+    kmeans_values_res = KMeans(n_clusters=2, random_state=0).fit(pd.DataFrame(values))
+    mean_values_res_kmeans_label0 = np.mean(values[kmeans_values_res.labels_==0]) 
+    mean_values_res_kmeans_label1 = np.mean(values[kmeans_values_res.labels_==1])
+    zero_lab_has_lower_mean = mean_values_res_kmeans_label0 < mean_values_res_kmeans_label1
+
+    df_values_clust = pd.DataFrame(values)
+    df_values_clust['kmeans'] = 0
+    df_values_clust['kmeans'][(case_control_labels==case_cond).values] = [1 if x==int(zero_lab_has_lower_mean) else 0 for x in kmeans_values_res.labels_]
+    
+    return df_values_clust['kmeans'].values
 
 def kmeans_correction(y_true: np.ndarray, y_pred: np.ndarray, case_cond: int, rand_state: int) -> np.ndarray:
     """Correct predicted labels using a k-means strategy, helps account for potential bi-modality."""
@@ -60,8 +78,9 @@ def svm_predictions(x: np.ndarray, y: np.ndarray, case_cond: int, rand_state: in
     return y_prob, y_labels
 
 
-def determine_pcs_heuristic(adata: types.AnnData, min_pcs: int = 2, max_pcs: int = 60,
-                            rand_state: int = 0) -> Tuple[List[int], List[float], List[float]]:
+def determine_pcs_heuristic_ks(adata: types.AnnData, orig_label: str="batch",
+                               min_pcs: int = 2, max_pcs: int = 60,
+                               rand_state: int = 0) -> Tuple[List[int], List[float], List[float]]:
     """Heuristic decision criterion for number of PCs.
     
     Choose the NUM_PCS that maximizes the Kolmogorov-Smirnov test statistic
@@ -72,16 +91,17 @@ def determine_pcs_heuristic(adata: types.AnnData, min_pcs: int = 2, max_pcs: int
     results = collections.defaultdict(list)
     for num_pcs in tqdm(np.arange(min_pcs, max_pcs + 1, 1)):
         adata_ks = adata.copy()
-        y = adata_ks.obs['batch'].astype('int').values
-        adata_ks.obs['batch'] = y
+        y = adata_ks.obs[orig_label].astype('int').values
+        adata_ks.obs[orig_label] = y
         x = x_pca[:, :num_pcs]
         p_hat = logistic_regression(x, y, rand_state)
+        adata_ks.obs['p_hat'] = p_hat
         new_labels = kmeans_correction(y, p_hat, 1, rand_state)
         adata_ks.obs['new_labels'] = new_labels
 
-        conditions = [(adata_ks.obs['batch'] == 0),
-                      (adata_ks.obs['batch'] == 1) & (adata_ks.obs['new_labels'] == 0),
-                      (adata_ks.obs['batch'] == 1) & (adata_ks.obs['new_labels'] == 1)]
+        conditions = [(adata_ks.obs[orig_label] == 0),
+                      (adata_ks.obs[orig_label] == 1) & (adata_ks.obs['new_labels'] == 0),
+                      (adata_ks.obs[orig_label] == 1) & (adata_ks.obs['new_labels'] == 1)]
         values = ['control', 'case_new0', 'case_new1']
         adata_ks.obs['three_labels_batch_newlabels'] = np.select(conditions, values)
 
