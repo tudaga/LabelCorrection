@@ -37,8 +37,8 @@ def map_to_binary(values, case_control_labels, case_cond=1):
     
     return df_values_clust['kmeans'].values
 
-def kmeans_correction(y_true: np.ndarray, y_pred: np.ndarray, case_cond: int, rand_state: int) -> np.ndarray:
-    """Correct predicted labels using a k-means strategy, helps account for potential bi-modality."""
+def kmeans_clustering(y_true: np.ndarray, y_pred: np.ndarray, case_cond: int, rand_state: int) -> np.ndarray:
+    """Binarize continous scores using a k-means strategy. This helps account for potential bi-modality."""
     is_case_cond = y_true == case_cond
     assert np.sum(is_case_cond), f'Found 0 examples of case condition {case_cond}!'
     kmeans_case = sklearn.cluster.KMeans(n_clusters=2, n_init='auto', random_state=rand_state)
@@ -48,9 +48,9 @@ def kmeans_correction(y_true: np.ndarray, y_pred: np.ndarray, case_cond: int, ra
     mean_p_hat_kmeans_label0 = np.mean(y_pred[is_case_cond][k_labels == 0])
     mean_p_hat_kmeans_label1 = np.mean(y_pred[is_case_cond][k_labels == 1])
     zero_lab_has_lower_mean = mean_p_hat_kmeans_label0 < mean_p_hat_kmeans_label1
-    p_hat = np.zeros_like(y_pred)
-    p_hat[is_case_cond] = np.array([1 if x == int(zero_lab_has_lower_mean) else 0 for x in k_labels])
-    return p_hat
+    p_label = np.zeros_like(y_pred)
+    p_label[is_case_cond] = np.array([1 if x == int(zero_lab_has_lower_mean) else 0 for x in k_labels])
+    return p_label
 
 
 def logistic_regression(x: np.ndarray, y: np.ndarray, rand_state: int) -> np.ndarray:
@@ -63,9 +63,9 @@ def logistic_regression(x: np.ndarray, y: np.ndarray, rand_state: int) -> np.nda
 
 def logistic_predictions(x: np.ndarray, y: np.ndarray, case_cond: int, rand_state: int) -> Tuple[
     np.ndarray, np.ndarray]:
-    """Linear strategy for getting probabilities and predictions."""
+    """Linear strategy for getting probabilities (continous scores) and binarized labels using kmeans strategy."""
     y_prob = logistic_regression(x, y, rand_state)
-    y_labels = kmeans_correction(y, y_prob, case_cond, rand_state)
+    y_labels = kmeans_clustering(y, y_prob, case_cond, rand_state)
     return y_prob, y_labels
 
 
@@ -74,7 +74,7 @@ def svm_predictions(x: np.ndarray, y: np.ndarray, case_cond: int, rand_state: in
     model = sklearn.svm.SVC(kernel='linear', probability=True)
     model.fit(x, y)
     y_prob = model.predict_proba(x)[:, 1]
-    y_labels = kmeans_correction(y, y_prob, case_cond, rand_state)
+    y_labels = kmeans_clustering(y, y_prob, case_cond, rand_state)
     return y_prob, y_labels
 
 
@@ -96,7 +96,7 @@ def determine_pcs_heuristic_ks(adata: types.AnnData, orig_label: str="batch",
         x = x_pca[:, :num_pcs]
         p_hat = logistic_regression(x, y, rand_state)
         adata_ks.obs['p_hat'] = p_hat
-        new_labels = kmeans_correction(y, p_hat, 1, rand_state)
+        new_labels = kmeans_clustering(y, p_hat, 1, rand_state)
         adata_ks.obs['new_labels'] = new_labels
 
         conditions = [(adata_ks.obs[orig_label] == 0),
