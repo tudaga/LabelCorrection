@@ -1,4 +1,5 @@
 # HiDDEN: A machine learning label refinement method for detection of disease-relevant populations in case-control single-cell transcriptomics
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13823942.svg)](https://doi.org/10.5281/zenodo.13823942)
 
 This repo contains:
 * 🐍📦 a python **library** *hiddensc* 
